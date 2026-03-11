@@ -44,15 +44,34 @@ export function formatManualOverrideSummary(override: ManualModerationOverride) 
   return `Manual override (${override.verdict}): ${override.note}`
 }
 
+function isScannerManagedReason(reason: string | undefined) {
+  if (!reason) return false
+  return (
+    reason === 'pending.scan' ||
+    reason === 'pending.scan.stale' ||
+    reason.startsWith('scanner.')
+  )
+}
+
+function shouldPreserveExistingLock(basePatch: SkillModerationPatch | undefined) {
+  if (!basePatch) return false
+  if (
+    basePatch.moderationVerdict === 'malicious' ||
+    basePatch.moderationFlags?.includes('blocked.malware')
+  ) {
+    return true
+  }
+  if (basePatch.moderationStatus !== 'hidden') return false
+  if (isManualOverrideReason(basePatch.moderationReason)) return false
+  return !isScannerManagedReason(basePatch.moderationReason)
+}
+
 export function applyManualOverrideToSkillPatch(params: {
   basePatch?: SkillModerationPatch
   override: ManualModerationOverride
   now: number
 }): SkillModerationPatch {
-  if (
-    params.basePatch?.moderationVerdict === 'malicious' ||
-    params.basePatch?.moderationFlags?.includes('blocked.malware')
-  ) {
+  if (shouldPreserveExistingLock(params.basePatch)) {
     return params.basePatch
   }
 

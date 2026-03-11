@@ -9,7 +9,11 @@ vi.mock('./lib/access', async () => {
 })
 
 const { requireUser } = await import('./lib/access')
-const { setSkillManualOverride, clearSkillManualOverride } = await import('./skills')
+const {
+  setSkillManualOverride,
+  clearSkillManualOverride,
+  updateVersionLlmAnalysisInternal,
+} = await import('./skills')
 
 type WrappedHandler<TArgs, TResult = unknown> = {
   _handler: (ctx: unknown, args: TArgs) => Promise<TResult>
@@ -26,6 +30,13 @@ const clearSkillManualOverrideHandler = (
   clearSkillManualOverride as unknown as WrappedHandler<{
     skillId: string
     note: string
+  }>
+)._handler
+
+const updateVersionLlmAnalysisInternalHandler = (
+  updateVersionLlmAnalysisInternal as unknown as WrappedHandler<{
+    versionId: string
+    llmAnalysis: Record<string, unknown>
   }>
 )._handler
 
@@ -310,5 +321,113 @@ describe('skills manual overrides', () => {
     ).rejects.toThrow('Audit note must be at most 1200 characters.')
     expect(patch).not.toHaveBeenCalled()
     expect(insert).not.toHaveBeenCalled()
+  })
+
+  it('rejects manual overrides for malware-blocked skills', async () => {
+    vi.mocked(requireUser).mockResolvedValue({
+      userId: 'users:moderator',
+      user: { _id: 'users:moderator', role: 'moderator' },
+    } as never)
+
+    const skill = {
+      _id: 'skills:1',
+      latestVersionId: 'skillVersions:1',
+      softDeletedAt: undefined,
+      moderationStatus: 'hidden',
+      moderationReason: 'manual.override.clean',
+      moderationVerdict: 'malicious',
+      moderationFlags: ['blocked.malware'],
+    }
+
+    const { ctx, patch, insert } = makeCtx({ skill })
+
+    await expect(
+      setSkillManualOverrideHandler(ctx, {
+        skillId: 'skills:1',
+        note: 'trying to reactivate blocked malware',
+      }),
+    ).rejects.toThrow('Skill is not currently suspicious.')
+    expect(patch).not.toHaveBeenCalled()
+    expect(insert).not.toHaveBeenCalled()
+  })
+
+  it('does not let llm scan sync clear an existing quality quarantine', async () => {
+    vi.mocked(requireUser).mockReset()
+
+    const skill = {
+      _id: 'skills:1',
+      ownerUserId: 'users:owner',
+      latestVersionId: 'skillVersions:7',
+      moderationStatus: 'hidden',
+      moderationReason: 'quality.low',
+      moderationVerdict: 'clean',
+      moderationFlags: undefined,
+    }
+    const version = {
+      _id: 'skillVersions:7',
+      skillId: 'skills:1',
+      staticScan: undefined,
+      vtAnalysis: { status: 'clean', checkedAt: 100 },
+      llmAnalysis: undefined,
+    }
+
+    const { ctx, patch } = makeCtx({ skill, version })
+
+    await updateVersionLlmAnalysisInternalHandler(ctx, {
+      versionId: 'skillVersions:7',
+      llmAnalysis: {
+        status: 'clean',
+        checkedAt: 200,
+      },
+    })
+
+    expect(patch).toHaveBeenCalledTimes(1)
+    expect(patch).toHaveBeenCalledWith('skillVersions:7', {
+      llmAnalysis: {
+        status: 'clean',
+        checkedAt: 200,
+      },
+    })
+  })
+
+  it('updates global public count when llm scan sync restores a skill to active', async () => {
+    const now = 1_700_000_300_000
+    vi.spyOn(Date, 'now').mockReturnValue(now)
+
+    const skill = {
+      _id: 'skills:1',
+      ownerUserId: 'users:owner',
+      latestVersionId: 'skillVersions:8',
+      softDeletedAt: undefined,
+      moderationStatus: 'hidden',
+      moderationReason: 'scanner.llm.suspicious',
+      moderationVerdict: 'suspicious',
+      moderationFlags: ['flagged.suspicious'],
+    }
+    const version = {
+      _id: 'skillVersions:8',
+      skillId: 'skills:1',
+      staticScan: undefined,
+      vtAnalysis: undefined,
+      llmAnalysis: { status: 'suspicious', checkedAt: now - 100 },
+    }
+
+    const { ctx, patch } = makeCtx({ skill, version })
+
+    await updateVersionLlmAnalysisInternalHandler(ctx, {
+      versionId: 'skillVersions:8',
+      llmAnalysis: {
+        status: 'clean',
+        checkedAt: now,
+      },
+    })
+
+    expect(patch).toHaveBeenCalledWith(
+      'globalStats:1',
+      expect.objectContaining({
+        activeSkillsCount: 2,
+        updatedAt: now,
+      }),
+    )
   })
 })

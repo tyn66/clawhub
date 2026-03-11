@@ -77,4 +77,33 @@ describe('manualOverrides', () => {
       updatedAt: now,
     })
   })
+
+  it('preserves non-scanner hidden locks over a clean override', () => {
+    const now = 1_700_000_200_000
+    const patch = applyManualOverrideToSkillPatch({
+      basePatch: {
+        moderationStatus: 'hidden',
+        moderationReason: 'quality.low',
+        moderationVerdict: 'clean',
+        moderationFlags: undefined,
+        moderationSummary: 'Auto-quarantined by quality gate.',
+        updatedAt: now,
+      },
+      override: {
+        verdict: 'clean',
+        note: 'older suspicious finding was reviewed',
+        reviewerUserId: userId('users:reviewer'),
+        updatedAt: now,
+      },
+      now,
+    })
+
+    expect(patch).toMatchObject({
+      moderationStatus: 'hidden',
+      moderationReason: 'quality.low',
+      moderationVerdict: 'clean',
+      moderationSummary: 'Auto-quarantined by quality gate.',
+      updatedAt: now,
+    })
+  })
 })

@@ -279,6 +279,8 @@ async function patchStructuredModerationFromVersion(
     '_id' | 'staticScan' | 'vtAnalysis' | 'llmAnalysis'
   >,
 ) {
+  if (shouldPreserveExistingModerationLock(skill)) return
+
   const now = Date.now()
   const owner = skill.ownerUserId ? await ctx.db.get(skill.ownerUserId) : null
   const basePatch = buildScannerModerationPatchFromVersion({
@@ -292,10 +294,12 @@ async function patchStructuredModerationFromVersion(
     now,
   })
 
+  const nextSkill = { ...skill, ...patch }
   await ctx.db.patch(skill._id, {
     ...patch,
     updatedAt: now,
   })
+  await adjustGlobalPublicCountForSkillChange(ctx, skill, nextSkill)
 }
 const TRUSTED_PUBLISHER_SKILL_THRESHOLD = 10
 const LOW_TRUST_BURST_THRESHOLD_PER_HOUR = 8
@@ -343,6 +347,27 @@ function stripSuspiciousFlag(flags: string[] | undefined) {
   return next.length ? next : undefined
 }
 
+function hasMalwareBlock(flags: string[] | undefined) {
+  return flags?.includes('blocked.malware') ?? false
+}
+
+function isScannerManagedReason(reason: string | undefined) {
+  if (!reason) return false
+  return (
+    reason === 'pending.scan' ||
+    reason === 'pending.scan.stale' ||
+    reason.startsWith('scanner.')
+  )
+}
+
+function shouldPreserveExistingModerationLock(
+  skill: Pick<Doc<'skills'>, 'moderationStatus' | 'moderationReason'>,
+) {
+  if (skill.moderationStatus !== 'hidden') return false
+  if (isManualOverrideReason(skill.moderationReason)) return false
+  return !isScannerManagedReason(skill.moderationReason)
+}
+
 function buildManualOverrideRecord(params: {
   note: string
   reviewerUserId: Id<'users'>
@@ -357,8 +382,13 @@ function buildManualOverrideRecord(params: {
 }
 
 function canApplySkillManualOverride(
-  skill: Pick<Doc<'skills'>, 'moderationReason' | 'moderationFlags'>,
+  skill: Pick<
+    Doc<'skills'>,
+    'moderationStatus' | 'moderationReason' | 'moderationFlags'
+  >,
 ) {
+  if (hasMalwareBlock(skill.moderationFlags)) return false
+  if (shouldPreserveExistingModerationLock(skill)) return false
   return (
     isSkillSuspicious(skill) || isManualOverrideReason(skill.moderationReason)
   )
@@ -1178,6 +1208,10 @@ export const getBySlug = query({
     // Moderation info - visible to owners for all states, or anyone for flagged skills (transparency)
     const showModerationInfo =
       isOwner || isMalwareBlocked || isSuspicious || overrideActive
+    const publicModerationSummary =
+      !isOwner && overrideActive && !isMalwareBlocked && !isSuspicious
+        ? 'Security findings were reviewed by staff and cleared for public use.'
+        : skill.moderationSummary
     const moderationInfo = showModerationInfo
       ? {
           isPendingScan,
@@ -1188,7 +1222,7 @@ export const getBySlug = query({
           overrideActive,
           verdict: skill.moderationVerdict,
           reasonCodes: skill.moderationReasonCodes,
-          summary: skill.moderationSummary,
+          summary: publicModerationSummary,
           engineVersion: skill.moderationEngineVersion,
           updatedAt: skill.moderationEvaluatedAt,
           reason: isOwner ? skill.moderationReason : undefined,
