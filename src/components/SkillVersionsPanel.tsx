@@ -42,7 +42,7 @@ export function SkillVersionsPanel({
                     <span style={{ color: "var(--ink-soft)" }}> · auto</span>
                   ) : null}
                 </div>
-                <div style={{ color: "#5c554e", whiteSpace: "pre-wrap" }}>{version.changelog}</div>
+                <div style={{ color: "#5c554e", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{version.changelog}</div>
                 <div className="version-scan-results">
                   {!suppressScanResults && (version.sha256hash || version.llmAnalysis) ? (
                     <SecurityScanResults

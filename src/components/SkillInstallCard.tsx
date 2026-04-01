@@ -159,7 +159,7 @@ export function SkillInstallCard({ clawdis, osLabels }: SkillInstallCardProps) {
                       {dep.version ? ` ${dep.version}` : ""}
                     </span>
                     {dep.url ? (
-                      <div style={{ fontSize: "0.8rem" }}>
+                      <div style={{ fontSize: "0.8rem", wordBreak: "break-all" }}>
                         <a href={dep.url} target="_blank" rel="noopener noreferrer">
                           {dep.url}
                         </a>
@@ -212,7 +212,7 @@ export function SkillInstallCard({ clawdis, osLabels }: SkillInstallCardProps) {
               {links?.homepage ? (
                 <div className="stat">
                   <strong>Homepage</strong>
-                  <a href={links.homepage} target="_blank" rel="noopener noreferrer">
+                  <a href={links.homepage} target="_blank" rel="noopener noreferrer" style={{ wordBreak: "break-all" }}>
                     {links.homepage}
                   </a>
                 </div>
@@ -220,7 +220,7 @@ export function SkillInstallCard({ clawdis, osLabels }: SkillInstallCardProps) {
               {links?.repository ? (
                 <div className="stat">
                   <strong>Repository</strong>
-                  <a href={links.repository} target="_blank" rel="noopener noreferrer">
+                  <a href={links.repository} target="_blank" rel="noopener noreferrer" style={{ wordBreak: "break-all" }}>
                     {links.repository}
                   </a>
                 </div>

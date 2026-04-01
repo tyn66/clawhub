@@ -204,7 +204,7 @@ export function SoulDetailPage({ slug }: SoulDetailPageProps) {
                         <span style={{ color: "var(--ink-soft)" }}> · auto</span>
                       ) : null}
                     </div>
-                    <div style={{ color: "#5c554e", whiteSpace: "pre-wrap" }}>
+                    <div style={{ color: "#5c554e", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                       {version.changelog}
                     </div>
                   </div>

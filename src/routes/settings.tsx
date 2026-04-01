@@ -334,7 +334,7 @@ export function Settings() {
           {newToken ? (
             <div className="stat" style={{ overflowX: "auto" }}>
               <div style={{ marginBottom: 8 }}>Copy this token now:</div>
-              <code>{newToken}</code>
+              <code style={{ wordBreak: "break-all", overflowWrap: "anywhere" }}>{newToken}</code>
             </div>
           ) : null}
         </div>
