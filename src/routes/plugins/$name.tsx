@@ -1,4 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ExternalLink, Copy, Check, Download } from "lucide-react";
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { SecurityScanResults } from "../../components/SkillSecurityScanResults";
@@ -10,7 +12,7 @@ import {
   type PackageDetailResponse,
   type PackageVersionDetail,
 } from "../../lib/packageApi";
-import { familyLabel, packageCapabilityLabel } from "../../lib/packageLabels";
+import { familyLabel } from "../../lib/packageLabels";
 
 type PluginDetailLoaderData = {
   detail: PackageDetailResponse;
@@ -73,6 +75,58 @@ function VerifiedBadge() {
   );
 }
 
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      className="btn btn-sm"
+      style={{ flexShrink: 0 }}
+      onClick={() => {
+        void navigator.clipboard.writeText(text).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        });
+      }}
+      aria-label="Copy to clipboard"
+    >
+      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      {copied ? "Copied" : "Copy"}
+    </button>
+  );
+}
+
+const CAPABILITY_LABELS: Record<string, string> = {
+  executesCode: "Executes code",
+  runtimeId: "Runtime ID",
+  pluginKind: "Plugin kind",
+  channels: "Channels",
+  providers: "Providers",
+  hooks: "Hooks",
+  bundledSkills: "Bundled skills",
+  setupEntry: "Setup entry",
+  toolNames: "Tools",
+  commandNames: "Commands",
+  serviceNames: "Services",
+  capabilityTags: "Tags",
+  httpRouteCount: "HTTP routes",
+  bundleFormat: "Bundle format",
+  hostTargets: "Host targets",
+};
+
+function formatCapabilityValue(value: unknown): string {
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "number") return String(value);
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value.length === 0 ? "None" : value.join(", ");
+  return JSON.stringify(value);
+}
+
+function isEmptyObject(obj: unknown): boolean {
+  if (!obj || typeof obj !== "object") return true;
+  return Object.keys(obj).length === 0;
+}
+
 function PluginDetailRoute() {
   const { name } = Route.useParams();
   const { detail, version, readme } = Route.useLoaderData() as PluginDetailLoaderData;
@@ -86,6 +140,7 @@ function PluginDetailRoute() {
   }
 
   const pkg = detail.package;
+  const owner = detail.owner;
   const latestRelease = version?.version ?? null;
   const installSnippet =
     pkg.family === "code-plugin"
@@ -94,96 +149,266 @@ function PluginDetailRoute() {
         ? `openclaw bundles install clawhub:${pkg.name}`
         : `openclaw skills install ${pkg.name}`;
 
+  const capabilities = latestRelease?.capabilities ?? pkg.capabilities;
+  const compatibility = latestRelease?.compatibility ?? pkg.compatibility;
+  const verification = latestRelease?.verification ?? pkg.verification;
+
+  const capEntries = capabilities
+    ? Object.entries(capabilities).filter(
+        ([, v]) => v !== undefined && v !== null && v !== false && !(Array.isArray(v) && v.length === 0),
+      )
+    : [];
+
+  const compatEntries = compatibility
+    ? Object.entries(compatibility).filter(([, v]) => v !== undefined && v !== null)
+    : [];
+
   return (
     <main className="section">
       <div className="skill-detail-stack">
+        {/* Header card */}
         <section className="card">
-          <div className="skill-card-tags" style={{ marginBottom: 12 }}>
-            <span className="tag">{familyLabel(pkg.family)}</span>
-            {pkg.capabilities?.executesCode ? (
-              <span className="tag tag-accent">
-                {packageCapabilityLabel(pkg.family, pkg.capabilities.executesCode)}
-              </span>
-            ) : null}
-            {pkg.isOfficial ? (
-              <span className="tag" style={{ background: "rgba(59, 130, 246, 0.15)", color: "#3b82f6" }}>
-                <VerifiedBadge />
-              </span>
-            ) : null}
-            {pkg.verification?.tier ? <span className="tag">{pkg.verification.tier}</span> : null}
+          <div className="plugin-detail-header">
+            <div className="plugin-detail-meta">
+              <div className="skill-card-tags" style={{ marginBottom: 8 }}>
+                <span className="tag">{familyLabel(pkg.family)}</span>
+                {verification?.tier ? (
+                  <span className="tag tag-compact">{verification.tier.replace(/-/g, " ")}</span>
+                ) : null}
+                {pkg.isOfficial ? (
+                  <span className="tag" style={{ background: "rgba(59, 130, 246, 0.15)", color: "#3b82f6" }}>
+                    <VerifiedBadge />
+                  </span>
+                ) : null}
+              </div>
+              <h1 className="section-title" style={{ marginBottom: 4 }}>
+                {pkg.displayName}
+                {pkg.latestVersion ? (
+                  <span className="plugin-version-badge">v{pkg.latestVersion}</span>
+                ) : null}
+              </h1>
+              <p className="section-subtitle" style={{ marginBottom: 8 }}>
+                {pkg.summary ?? "No summary provided."}
+              </p>
+              <div className="plugin-meta-row">
+                <span className="mono" style={{ fontSize: "0.85rem", color: "var(--ink-soft)" }}>
+                  {pkg.name}
+                </span>
+                {pkg.runtimeId ? (
+                  <>
+                    <span style={{ color: "var(--ink-soft)", opacity: 0.4 }}>·</span>
+                    <span style={{ fontSize: "0.85rem", color: "var(--ink-soft)" }}>
+                      runtime <span className="mono">{pkg.runtimeId}</span>
+                    </span>
+                  </>
+                ) : null}
+                {owner?.handle ? (
+                  <>
+                    <span style={{ color: "var(--ink-soft)", opacity: 0.4 }}>·</span>
+                    <Link
+                      to="/u/$handle"
+                      params={{ handle: owner.handle }}
+                      className="plugin-meta-link"
+                    >
+                      by @{owner.handle}
+                    </Link>
+                  </>
+                ) : null}
+              </div>
+            </div>
           </div>
-          <h1 className="section-title" style={{ marginBottom: 8 }}>
-            {pkg.displayName}
-          </h1>
-          <p className="section-subtitle" style={{ marginBottom: 12 }}>
-            {pkg.summary ?? "No summary provided."}
-          </p>
+
           {pkg.family === "code-plugin" && !pkg.isOfficial ? (
-            <div className="tag tag-accent" style={{ marginBottom: 12 }}>
+            <div className="tag tag-accent" style={{ marginTop: 12 }}>
               Community code plugin. Review compatibility and verification before install.
             </div>
           ) : null}
-          <div className="skills-row-slug" style={{ marginBottom: 12 }}>
-            {pkg.name}
-            {pkg.runtimeId ? ` · runtime id ${pkg.runtimeId}` : ""}
-          </div>
-          <details className="bundle-details" open>
-            <summary>Install</summary>
-            <pre>
-              <code>{installSnippet}</code>
-            </pre>
-          </details>
-          <details className="bundle-details" open>
-            <summary>Latest Release</summary>
-            <div style={{ display: "grid", gap: 8 }}>
-              <div>{pkg.latestVersion ? `Version ${pkg.latestVersion}` : "No latest tag"}</div>
-              {pkg.latestVersion ? (
-                <div>
-                  <a href={getPackageDownloadPath(name, pkg.latestVersion)}>Download zip</a>
-                </div>
-              ) : null}
+
+          {/* Install */}
+          <div className="plugin-install-section">
+            <div className="plugin-install-bar">
+              <pre className="plugin-install-code"><code>{installSnippet}</code></pre>
+              <CopyButton text={installSnippet} />
             </div>
-          </details>
-          {latestRelease ? (
-            <details className="bundle-details" open>
-              <summary>Compatibility</summary>
-              <pre>
-                <code>{JSON.stringify(latestRelease.compatibility ?? pkg.compatibility ?? {}, null, 2)}</code>
-              </pre>
-            </details>
+          </div>
+
+          {/* Latest Release */}
+          {pkg.latestVersion ? (
+            <div className="plugin-release-row">
+              <span style={{ fontSize: "0.88rem" }}>
+                Latest release: <strong>v{pkg.latestVersion}</strong>
+              </span>
+              <a
+                href={getPackageDownloadPath(name, pkg.latestVersion)}
+                className="btn btn-sm"
+              >
+                <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                Download zip
+              </a>
+            </div>
           ) : null}
-          {latestRelease ? (
-            <details className="bundle-details" open>
-              <summary>Capabilities</summary>
-              <pre>
-                <code>{JSON.stringify(latestRelease.capabilities ?? pkg.capabilities ?? {}, null, 2)}</code>
-              </pre>
-            </details>
-          ) : null}
-          {latestRelease ? (
+        </section>
+
+        {/* Capabilities */}
+        {capEntries.length > 0 ? (
+          <section className="card">
+            <div className="plugin-section-header">
+              <h2 className="plugin-section-title">Capabilities</h2>
+              <CopyButton text={JSON.stringify(capabilities, null, 2)} />
+            </div>
+            <div className="plugin-kv-grid">
+              {capEntries.map(([key, value]) => (
+                <div key={key} className="plugin-kv-row">
+                  <dt className="plugin-kv-label">{CAPABILITY_LABELS[key] ?? key}</dt>
+                  <dd className="plugin-kv-value">
+                    {key === "capabilityTags" && Array.isArray(value) ? (
+                      <div className="plugin-tag-list">
+                        {(value as string[]).map((tag) => (
+                          <Link
+                            key={tag}
+                            to="/plugins"
+                            search={{ q: tag }}
+                            className="tag tag-compact"
+                          >
+                            {tag}
+                          </Link>
+                        ))}
+                      </div>
+                    ) : key === "hostTargets" && Array.isArray(value) ? (
+                      <div className="plugin-tag-list">
+                        {(value as string[]).map((target) => (
+                          <span key={target} className="tag tag-compact">{target}</span>
+                        ))}
+                      </div>
+                    ) : (
+                      formatCapabilityValue(value)
+                    )}
+                  </dd>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {/* Compatibility */}
+        {compatEntries.length > 0 ? (
+          <section className="card">
+            <div className="plugin-section-header">
+              <h2 className="plugin-section-title">Compatibility</h2>
+              <CopyButton text={JSON.stringify(compatibility, null, 2)} />
+            </div>
+            <div className="plugin-kv-grid">
+              {compatEntries.map(([key, value]) => (
+                <div key={key} className="plugin-kv-row">
+                  <dt className="plugin-kv-label">
+                    {key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase())}
+                  </dt>
+                  <dd className="plugin-kv-value mono">{String(value)}</dd>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {/* Security Scan */}
+        {latestRelease ? (
+          <section className="card">
             <SecurityScanResults
               sha256hash={latestRelease.sha256hash ?? undefined}
               vtAnalysis={latestRelease.vtAnalysis ?? undefined}
               llmAnalysis={latestRelease.llmAnalysis ?? undefined}
               staticFindings={latestRelease.staticScan?.findings ?? []}
             />
-          ) : null}
-          <details className="bundle-details" open>
-            <summary>Verification</summary>
-            <pre>
-              <code>{JSON.stringify(latestRelease?.verification ?? pkg.verification ?? {}, null, 2)}</code>
-            </pre>
-          </details>
-          <details className="bundle-details" open>
-            <summary>Tags</summary>
-            <pre>
-              <code>{JSON.stringify(pkg.tags, null, 2)}</code>
-            </pre>
-          </details>
-        </section>
+          </section>
+        ) : null}
 
-        {readme ? (
+        {/* Verification */}
+        {verification && !isEmptyObject(verification) ? (
           <section className="card">
+            <div className="plugin-section-header">
+              <h2 className="plugin-section-title">Verification</h2>
+            </div>
+            <div className="plugin-kv-grid">
+              {verification.tier ? (
+                <div className="plugin-kv-row">
+                  <dt className="plugin-kv-label">Tier</dt>
+                  <dd className="plugin-kv-value">{verification.tier.replace(/-/g, " ")}</dd>
+                </div>
+              ) : null}
+              {verification.scope ? (
+                <div className="plugin-kv-row">
+                  <dt className="plugin-kv-label">Scope</dt>
+                  <dd className="plugin-kv-value">{verification.scope.replace(/-/g, " ")}</dd>
+                </div>
+              ) : null}
+              {verification.summary ? (
+                <div className="plugin-kv-row">
+                  <dt className="plugin-kv-label">Summary</dt>
+                  <dd className="plugin-kv-value">{verification.summary}</dd>
+                </div>
+              ) : null}
+              {verification.sourceRepo ? (
+                <div className="plugin-kv-row">
+                  <dt className="plugin-kv-label">Source</dt>
+                  <dd className="plugin-kv-value">
+                    <a
+                      href={verification.sourceRepo}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="plugin-external-link"
+                    >
+                      {verification.sourceRepo.replace(/^https?:\/\//, "")}
+                      <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                    </a>
+                  </dd>
+                </div>
+              ) : null}
+              {verification.sourceCommit ? (
+                <div className="plugin-kv-row">
+                  <dt className="plugin-kv-label">Commit</dt>
+                  <dd className="plugin-kv-value mono">{verification.sourceCommit.slice(0, 12)}</dd>
+                </div>
+              ) : null}
+              {verification.sourceTag ? (
+                <div className="plugin-kv-row">
+                  <dt className="plugin-kv-label">Tag</dt>
+                  <dd className="plugin-kv-value mono">{verification.sourceTag}</dd>
+                </div>
+              ) : null}
+              {verification.hasProvenance !== undefined ? (
+                <div className="plugin-kv-row">
+                  <dt className="plugin-kv-label">Provenance</dt>
+                  <dd className="plugin-kv-value">{verification.hasProvenance ? "Yes" : "No"}</dd>
+                </div>
+              ) : null}
+              {verification.scanStatus ? (
+                <div className="plugin-kv-row">
+                  <dt className="plugin-kv-label">Scan status</dt>
+                  <dd className="plugin-kv-value">{verification.scanStatus}</dd>
+                </div>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
+
+        {/* Tags */}
+        {pkg.tags && Object.keys(pkg.tags).length > 0 ? (
+          <section className="card">
+            <h2 className="plugin-section-title">Tags</h2>
+            <div className="plugin-kv-grid">
+              {Object.entries(pkg.tags).map(([key, value]) => (
+                <div key={key} className="plugin-kv-row">
+                  <dt className="plugin-kv-label">{key}</dt>
+                  <dd className="plugin-kv-value mono">{value}</dd>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {/* Readme */}
+        {readme ? (
+          <section className="card markdown">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{readme}</ReactMarkdown>
           </section>
         ) : null}

@@ -101,48 +101,73 @@ export function PluginsIndex() {
         </p>
       </header>
 
-      <form
-        className="skills-toolbar"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void navigate({
-            search: (prev) => ({
-              ...prev,
-              cursor: undefined,
-              q: query.trim() || undefined,
-            }),
-          });
-        }}
-      >
-        <div className="skills-search">
-          <input
-            className="skills-search-input"
-            placeholder="Search plugins…"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-        </div>
-        <div className="skills-toolbar-row">
-          <select
-            className="skills-sort"
-            value={search.family ?? ""}
-            onChange={(event) => {
-              const value = event.target.value as PluginSearchState["family"] | "";
+      <div className="skills-toolbar">
+        <div className="plugins-toolbar-top">
+          <form
+            className="skills-search"
+            onSubmit={(event) => {
+              event.preventDefault();
               void navigate({
                 search: (prev) => ({
                   ...prev,
                   cursor: undefined,
                   q: query.trim() || undefined,
-                  family: value || undefined,
                 }),
               });
             }}
-            aria-label="Filter by type"
           >
-            <option value="">All plugins</option>
-            <option value="code-plugin">Code plugins</option>
-            <option value="bundle-plugin">Bundle plugins</option>
-          </select>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ opacity: 0.5, flexShrink: 0 }}>
+              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+            </svg>
+            <input
+              className="skills-search-input"
+              placeholder="Search plugins…"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </form>
+          <Link
+            className="btn btn-primary"
+            to="/publish-plugin"
+            search={{
+              ownerHandle: undefined,
+              name: undefined,
+              displayName: undefined,
+              family: undefined,
+              nextVersion: undefined,
+              sourceRepo: undefined,
+            }}
+          >
+            Publish Plugin
+          </Link>
+        </div>
+        <div className="skills-toolbar-row">
+          <div className="plugins-type-tabs" role="group" aria-label="Filter by type">
+            {([
+              { value: undefined, label: "All" },
+              { value: "code-plugin" as const, label: "Code" },
+              { value: "bundle-plugin" as const, label: "Bundles" },
+            ]).map((opt) => (
+              <button
+                key={opt.label}
+                className={`plugins-type-tab${(search.family ?? undefined) === opt.value ? " is-active" : ""}`}
+                type="button"
+                aria-pressed={(search.family ?? undefined) === opt.value}
+                onClick={() => {
+                  void navigate({
+                    search: (prev) => ({
+                      ...prev,
+                      cursor: undefined,
+                      q: query.trim() || undefined,
+                      family: opt.value,
+                    }),
+                  });
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
           <button
             className="search-filter-button"
             type="button"
@@ -158,7 +183,7 @@ export function PluginsIndex() {
               });
             }}
           >
-            Verified
+            <VerifiedBadge /> Verified
           </button>
           <button
             className="search-filter-button"
@@ -177,22 +202,8 @@ export function PluginsIndex() {
           >
             Executes code
           </button>
-          <Link
-            className="btn btn-primary"
-            to="/publish-plugin"
-            search={{
-              ownerHandle: undefined,
-              name: undefined,
-              displayName: undefined,
-              family: undefined,
-              nextVersion: undefined,
-              sourceRepo: undefined,
-            }}
-          >
-            Publish Plugin
-          </Link>
         </div>
-      </form>
+      </div>
 
       {items.length === 0 ? (
         <div className="card">No plugins match that filter.</div>
