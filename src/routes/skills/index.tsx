@@ -155,7 +155,7 @@ export function SkillsIndex() {
           <div className="browse-results-toolbar">
             <span className="browse-results-count">
               {model.isLoadingSkills
-                ? "Loading..."
+                ? "\u2014"
                 : `${model.sorted.length} results`}
               {(model.hasQuery || model.highlightedOnly || model.nonSuspiciousOnly) ? (
                 <button

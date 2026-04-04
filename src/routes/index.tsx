@@ -78,8 +78,9 @@ function SkillsHome() {
             The collaborative hub for agent skills
           </h1>
           <p className="home-hero-subtitle">
-            Discover, install, and share skill bundles for AI agents.
-            {skillCount != null ? ` ${formatCompactStat(skillCount)} skills and growing.` : ""}
+            {skillCount != null
+              ? `${formatCompactStat(skillCount)} skill bundles for AI agents. Browse, install, publish.`
+              : "Skill bundles for AI agents. Browse, install, publish."}
           </p>
           <div className="home-hero-actions">
             <Link
@@ -105,109 +106,100 @@ function SkillsHome() {
               Publish yours
             </Link>
           </div>
-          <p className="home-hero-explainer">
-            Skills are portable bundles of instructions, prompts, and tools
-            that give AI agents new capabilities. Install with one command.
-          </p>
         </div>
       </section>
 
-      {/* Trending this week */}
-      <section className="home-section">
-        <div className="home-section-header">
-          <h2 className="home-section-title">Trending</h2>
-          <Link
-            to="/skills"
-            search={{
-              q: undefined,
-              sort: "downloads" as const,
-              dir: "desc" as const,
-              highlighted: undefined,
-              nonSuspicious: true,
-              view: undefined,
-              focus: undefined,
-            }}
-            className="home-section-link"
-          >
-            See all
-          </Link>
-        </div>
-        <div className="results-list">
-          {trending.length === 0 ? (
-            <SkeletonRows count={4} />
-          ) : (
-            trending.map((entry) => (
+      {/* Trending */}
+      {trending.length > 0 ? (
+        <section className="home-section">
+          <div className="home-section-header">
+            <h2 className="home-section-title">Trending</h2>
+            <Link
+              to="/skills"
+              search={{
+                q: undefined,
+                sort: "downloads" as const,
+                dir: "desc" as const,
+                highlighted: undefined,
+                nonSuspicious: true,
+                view: undefined,
+                focus: undefined,
+              }}
+              className="home-section-link"
+            >
+              See all
+            </Link>
+          </div>
+          <div className="results-list">
+            {trending.map((entry) => (
               <SkillListItem
                 key={entry.skill._id}
                 skill={entry.skill}
                 ownerHandle={entry.ownerHandle}
                 owner={entry.owner}
               />
-            ))
-          )}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* Recently updated */}
-      <section className="home-section">
-        <div className="home-section-header">
-          <h2 className="home-section-title">Recently updated</h2>
-          <Link
-            to="/skills"
-            search={{
-              q: undefined,
-              sort: "updated" as const,
-              dir: "desc" as const,
-              highlighted: undefined,
-              nonSuspicious: true,
-              view: undefined,
-              focus: undefined,
-            }}
-            className="home-section-link"
-          >
-            See all
-          </Link>
-        </div>
-        <div className="results-list">
-          {recent.length === 0 ? (
-            <SkeletonRows count={4} />
-          ) : (
-            recent.map((entry) => (
+      {recent.length > 0 ? (
+        <section className="home-section">
+          <div className="home-section-header">
+            <h2 className="home-section-title">Recently updated</h2>
+            <Link
+              to="/skills"
+              search={{
+                q: undefined,
+                sort: "updated" as const,
+                dir: "desc" as const,
+                highlighted: undefined,
+                nonSuspicious: true,
+                view: undefined,
+                focus: undefined,
+              }}
+              className="home-section-link"
+            >
+              See all
+            </Link>
+          </div>
+          <div className="results-list">
+            {recent.map((entry) => (
               <SkillListItem
                 key={entry.skill._id}
                 skill={entry.skill}
                 ownerHandle={entry.ownerHandle}
                 owner={entry.owner}
               />
-            ))
-          )}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* Staff picks */}
-      <section className="home-section">
-        <div className="home-section-header">
-          <h2 className="home-section-title">Staff picks</h2>
-          <Link
-            to="/skills"
-            search={{
-              q: undefined,
-              sort: undefined,
-              dir: undefined,
-              highlighted: true,
-              nonSuspicious: undefined,
-              view: undefined,
-              focus: undefined,
-            }}
-            className="home-section-link"
-          >
-            See all
-          </Link>
-        </div>
-        <div className="grid">
-          {highlighted.length === 0 ? (
-            <div className="card">No highlighted skills yet.</div>
-          ) : (
+      {highlighted.length > 0 ? (
+        <section className="home-section">
+          <div className="home-section-header">
+            <h2 className="home-section-title">Staff picks</h2>
+            <Link
+              to="/skills"
+              search={{
+                q: undefined,
+                sort: undefined,
+                dir: undefined,
+                highlighted: true,
+                nonSuspicious: undefined,
+                view: undefined,
+                focus: undefined,
+              }}
+              className="home-section-link"
+            >
+              See all
+            </Link>
+          </div>
+          <div className="grid">
+            {
             highlighted.map((entry) => (
               <SkillCard
                 key={entry.skill._id}
@@ -228,10 +220,10 @@ function SkillsHome() {
                   </div>
                 }
               />
-            ))
-          )}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* Quick links */}
       <section className="home-section">
@@ -266,19 +258,6 @@ function SkillsHome() {
   );
 }
 
-function SkeletonRows({ count }: { count: number }) {
-  return (
-    <>
-      {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="skeleton-row">
-          <div className="skeleton-bar skeleton-bar-lg" />
-          <div className="skeleton-bar skeleton-bar-sm" />
-          <div className="skeleton-bar skeleton-bar-xs" />
-        </div>
-      ))}
-    </>
-  );
-}
 
 function OnlyCrabsHome() {
   const navigate = Route.useNavigate();

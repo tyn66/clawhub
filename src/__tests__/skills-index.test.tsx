@@ -74,8 +74,8 @@ describe("SkillsIndex", () => {
     convexHttpMock.query.mockReturnValue(new Promise(() => {}));
     render(<SkillsIndex />);
     await act(async () => {});
-    // Header subtitle and results area both show loading text
-    expect(screen.getAllByText(/Loading/i).length).toBeGreaterThanOrEqual(1);
+    // Results area shows skeleton or dash while loading
+    expect(screen.getByText("\u2014")).toBeTruthy();
     expect(screen.queryByText("No skills found")).toBeNull();
   });
 
