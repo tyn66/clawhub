@@ -1,22 +1,17 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import type { ActionCtx, MutationCtx } from "./_generated/server";
+import type { ActionCtx, MutationCtx, QueryCtx } from "./_generated/server";
 import { internalAction, internalMutation, internalQuery, mutation, query } from "./functions";
-import {
-  assertAdmin,
-  assertModerator,
-  getOptionalActiveAuthUserId,
-  requireUser,
-} from "./lib/access";
+import { assertAdmin, assertModerator, getOptionalActiveAuthUserId, requireUser } from "./lib/access";
 import { syncGitHubProfile } from "./lib/githubAccount";
-import { toPublicUser } from "./lib/public";
 import {
   ensurePersonalPublisherForUser,
   getActiveUserByHandleOrPersonalPublisher,
   getPublisherByHandle,
   getUserByHandleOrPersonalPublisher,
 } from "./lib/publishers";
+import { toPublicUser } from "./lib/public";
 import {
   getLatestActiveReservedHandle,
   isHandleReservedForAnotherUser,
@@ -301,9 +296,7 @@ export async function ensureHandler(ctx: MutationCtx) {
     updates.updatedAt = Date.now();
     await ctx.db.patch(userId, updates);
   }
-  const ensuredUser = hasUpdates
-    ? ({ ...user, ...updates } as Doc<"users">)
-    : ((await ctx.db.get(userId)) ?? user);
+  const ensuredUser = hasUpdates ? ({ ...user, ...updates } as Doc<"users">) : ((await ctx.db.get(userId)) ?? user);
   await ensurePersonalPublisherForUser(ctx, ensuredUser);
   return await ctx.db.get(userId);
 }
@@ -393,6 +386,23 @@ export const list = query({
   },
 });
 
+export const listPublic = query({
+  args: { limit: v.optional(v.number()), search: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const limit = clampInt(args.limit ?? 40, 1, 100);
+    const result = await queryUsersForPublicList(ctx, {
+      limit,
+      search: args.search,
+    });
+    return {
+      items: result.items
+        .map((user) => toPublicUser(user))
+        .filter((user): user is NonNullable<ReturnType<typeof toPublicUser>> => Boolean(user)),
+      total: result.total,
+    };
+  },
+});
+
 function normalizeSearchQuery(search?: string) {
   const trimmed = search?.trim().toLowerCase();
   return trimmed ? trimmed : undefined;
@@ -403,13 +413,7 @@ function computeUserSearchScanLimit(limit: number) {
 }
 
 async function queryUsersForAdminList(
-  ctx: {
-    db: {
-      query: (table: "users") => {
-        order: (order: "desc") => { take: (n: number) => Promise<Doc<"users">[]> };
-      };
-    };
-  },
+  ctx: Pick<QueryCtx, "db">,
   args: { limit: number; search?: string; exactUserId?: Id<"users"> },
 ) {
   const normalizedSearch = normalizeSearchQuery(args.search);
@@ -428,6 +432,27 @@ async function queryUsersForAdminList(
     containsExactUser: args.exactUserId
       ? result.items.some((user) => user._id === args.exactUserId)
       : false,
+  };
+}
+
+async function queryUsersForPublicList(
+  ctx: Pick<QueryCtx, "db">,
+  args: { limit: number; search?: string },
+) {
+  const normalizedSearch = normalizeSearchQuery(args.search);
+  const scanLimit = normalizedSearch
+    ? computeUserSearchScanLimit(args.limit)
+    : clampInt(args.limit * 6, args.limit, MAX_USER_SEARCH_SCAN);
+  const scannedUsers = await ctx.db
+    .query("users")
+    .withIndex("by_active_handle", (q) => q.eq("deletedAt", undefined).eq("deactivatedAt", undefined))
+    .order("desc")
+    .take(scanLimit);
+  const activeUsers = scannedUsers.filter((user) => Boolean(user.handle));
+  const result = buildUserSearchResults(activeUsers, normalizedSearch);
+  return {
+    items: result.items.slice(0, args.limit),
+    total: result.total,
   };
 }
 
@@ -860,8 +885,7 @@ async function ensurePublisherHandleWithActor(
 
   if (existing) {
     const nextDisplayName =
-      args.displayName?.trim() &&
-      (!existing.displayName || existing.displayName === existing.handle)
+      args.displayName?.trim() && (!existing.displayName || existing.displayName === existing.handle)
         ? displayName
         : existing.displayName;
     await ctx.db.patch(existing._id, {
