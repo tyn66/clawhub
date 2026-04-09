@@ -25,7 +25,7 @@ export const Route = createFileRoute("/souls/")({
 
 function SoulsHoldingPage() {
   return (
-    <main className="section souls-coming-page">
+    <main className="browse-page souls-coming-page">
       <section className="souls-coming-hero">
         <div>
           <div className="skill-card-tags mb-3">

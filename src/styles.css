@@ -246,6 +246,10 @@ body {
   letter-spacing: -0.01em;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -5695,9 +5699,16 @@ html.theme-transition::view-transition-new(theme) {
 /* ===== Browse Pages with Faceted Sidebar ===== */
 
 .browse-page {
+  width: 100%;
   max-width: var(--page-max);
   margin: 0 auto;
-  padding: var(--space-5) 20px var(--space-7);
+  padding: var(--space-5) var(--space-5) var(--space-7);
+}
+
+.browse-page-narrow {
+  width: 100%;
+  max-width: var(--page-narrow);
+  margin: 0 auto;
 }
 
 .browse-page-header {
