@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import Header from "../components/Header";
@@ -111,15 +111,28 @@ describe("Header", () => {
     expect(screen.queryByText("Packages")).toBeNull();
   });
 
-  it("renders a theme family shortcut and plain Skills tab", () => {
+  it("renders direct desktop theme family controls and plain Skills tab", () => {
     siteModeMock.mockReturnValue("skills");
+    setThemeMock.mockClear();
 
     render(<Header />);
 
-    expect(screen.getByText("Dash")).toBeTruthy();
+    expect(screen.getByText("Theme")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Claw" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Knot" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Dash" })).toBeTruthy();
+    expect(screen.getAllByText("Skills")).toHaveLength(1);
+    expect(screen.getAllByText("Souls")).toHaveLength(1);
+    expect(screen.getAllByText("Users")).toHaveLength(1);
+    expect(screen.getByPlaceholderText("Search skills, plugins, users")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Knot" }));
+    expect(setThemeMock).toHaveBeenCalledWith("knot");
+
+    fireEvent.click(screen.getByRole("button", { name: "Open menu" }));
+
     expect(screen.getAllByText("Skills")).toHaveLength(2);
     expect(screen.getAllByText("Souls")).toHaveLength(2);
     expect(screen.getAllByText("Users")).toHaveLength(2);
-    expect(screen.getByPlaceholderText("Search skills, plugins, users")).toBeTruthy();
   });
 });

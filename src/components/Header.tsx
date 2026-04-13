@@ -84,6 +84,11 @@ export default function Header() {
     });
   };
 
+  const setThemeFamily = (nextTheme: string) => {
+    applyTheme(mode, nextTheme);
+    setTheme(nextTheme);
+  };
+
   const handleNavSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const q = navSearchQuery.trim();
@@ -149,7 +154,7 @@ export default function Header() {
                       className="mobile-nav-link"
                       type="button"
                       onClick={() => {
-                        setTheme(option.value);
+                        setThemeFamily(option.value);
                         setMobileMenuOpen(false);
                       }}
                     >
@@ -231,9 +236,23 @@ export default function Header() {
               <Search size={18} aria-hidden="true" />
             </button>
             <div className="theme-toggle" ref={toggleRef}>
-              <Link to="/settings" hash="theme" className="theme-family-chip" aria-label={`Theme family: ${themeLabel}`}>
-                {themeLabel}
-              </Link>
+              <div className="theme-picker-desktop" aria-label={`Theme family, current ${themeLabel}`}>
+                <span className="theme-picker-label">Theme</span>
+                <div className="theme-family-toggle" role="group" aria-label="Theme family">
+                  {THEME_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className="theme-family-button"
+                      data-state={theme === option.value ? "on" : "off"}
+                      aria-pressed={theme === option.value}
+                      onClick={() => setThemeFamily(option.value)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <ToggleGroup
                 type="single"
                 value={mode}

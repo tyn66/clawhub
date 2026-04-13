@@ -166,27 +166,6 @@ export const FOOTER_NAV_SECTIONS: FooterNavSection[] = [
       { kind: "link", label: "Skills", to: "/skills", search: SKILLS_SEARCH },
       { kind: "link", label: "Plugins", to: "/plugins" },
       { kind: "link", label: "Souls", to: "/souls", search: SOULS_SEARCH },
-      { kind: "link", label: "Users", to: "/users" },
-      {
-        kind: "link",
-        label: "Staff Picks",
-        to: "/skills",
-        search: {
-          q: undefined,
-          sort: undefined,
-          dir: undefined,
-          highlighted: true,
-          nonSuspicious: undefined,
-          view: undefined,
-          focus: undefined,
-        },
-      },
-      {
-        kind: "link",
-        label: "Search",
-        to: "/search",
-        search: { q: undefined, type: undefined },
-      },
     ],
   },
   {
