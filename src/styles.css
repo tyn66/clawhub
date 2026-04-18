@@ -7110,10 +7110,9 @@ html.theme-transition::view-transition-new(theme) {
 
 .footer-grid {
   display: grid;
-  grid-template-columns: repeat(4, auto);
-  gap: var(--space-3) var(--space-7);
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
   padding: var(--space-3) 0 var(--space-2);
-  justify-content: center;
   text-align: center;
 }
 
@@ -7166,8 +7165,8 @@ html.theme-transition::view-transition-new(theme) {
 
 @media (max-width: 760px) {
   .footer-grid {
-    grid-template-columns: repeat(2, auto);
-    gap: var(--space-3) var(--space-5);
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
   }
 }
 
