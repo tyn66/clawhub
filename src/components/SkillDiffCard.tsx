@@ -402,7 +402,6 @@ export function SkillDiffCard({ skill, versions, variant = "card" }: SkillDiffCa
           ) : (
             <ClientOnly fallback={<div className="diff-empty">Preparing diff…</div>}>
               <DiffEditor
-                key={`diff-${viewMode}`}
                 className={`diff-monaco diff-monaco-${viewMode}`}
                 original={leftText}
                 modified={rightText}
