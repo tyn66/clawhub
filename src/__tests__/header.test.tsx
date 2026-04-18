@@ -157,6 +157,8 @@ describe("Header", () => {
 
 		fireEvent.click(screen.getByRole("button", { name: "Open menu" }));
 
+		expect(document.querySelector(".mobile-nav-brand-mark-image")).toBeTruthy();
+
 		const labels = Array.from(
 			document.querySelectorAll(".mobile-nav-section .mobile-nav-link"),
 		)

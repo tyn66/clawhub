@@ -129,7 +129,19 @@ export default function Header() {
               </button>
               <SheetContent side="left" className="mobile-nav-sheet">
                 <SheetHeader className="pr-10">
-                  <SheetTitle>{siteName}</SheetTitle>
+                  <SheetTitle>
+                    <span className="mobile-nav-brand">
+                      <span className="mobile-nav-brand-mark" aria-hidden="true">
+                        <img
+                          src="/clawd-logo.png"
+                          alt=""
+                          aria-hidden="true"
+                          className="mobile-nav-brand-mark-image"
+                        />
+                      </span>
+                      <span className="mobile-nav-brand-name">{siteName}</span>
+                    </span>
+                  </SheetTitle>
                   <SheetDescription>
                     Browse sections, switch theme, and access account actions.
                   </SheetDescription>
