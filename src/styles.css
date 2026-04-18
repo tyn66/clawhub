@@ -647,8 +647,8 @@ code {
 }
 
 .site-footer-inner {
-  max-width: var(--page-max);
-  margin: 0 auto;
+  width: 100%;
+  padding: 0 var(--space-5);
 }
 
 .site-footer-divider {
@@ -700,8 +700,7 @@ code {
 }
 
 .navbar-inner {
-  max-width: var(--page-max);
-  margin: 0 auto;
+  width: 100%;
   padding: 0 var(--space-5);
   display: flex;
   flex-direction: column;
@@ -8708,57 +8707,7 @@ html.theme-transition::view-transition-new(theme) {
   max-width: none;
 }
 
-/* ═══ MINIMAL FOOTER (home-v2 pages) ═══ */
-
-/* Fix: use :has() since main is wrapped in ErrorBoundary */
-.app-shell:has(.home-v2-main) > .site-footer .footer-grid {
-  display: none;
-}
-.app-shell:has(.home-v2-main) > .site-footer .site-footer-divider {
-  display: none;
-}
-.app-shell:has(.home-v2-main) > .site-footer {
-  border-top: 1px solid rgba(255,255,255,0.06);
-  padding: 0;
-  background: transparent;
-}
-.app-shell:has(.home-v2-main) > .site-footer .site-footer-inner {
-  max-width: none;
-  padding: 20px 48px;
-}
-.app-shell:has(.home-v2-main) > .site-footer .footer-bottom {
-  padding: 0;
-  margin: 0;
-  border: none;
-  font-size: 13px;
-  color: #555;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.app-shell:has(.home-v2-main) > .site-footer .footer-bottom a {
-  color: #777;
-}
-.app-shell:has(.home-v2-main) > .site-footer .footer-bottom a:hover {
-  color: #aaa;
-}
-
-/* ═══ HOME V2 — Page-max constraint + full-bleed background ═══ */
-.app-shell:has(.home-v2-main) {
-  background: #060608;
-}
-[data-theme-resolved="light"] .app-shell:has(.home-v2-main) {
-  background: #faf6f1;
-}
-
-/* ═══ HOME V2 — Full-width nav override ═══ */
-.app-shell:has(.home-v2-main) > header,
-.app-shell:has(.home-v2-main) > nav,
-.app-shell:has(.home-v2-main) .site-header,
-.app-shell:has(.home-v2-main) .site-header-inner {
-  max-width: none;
-  width: 100%;
-}
+/* ═══ HOME V2 — Layout ═══ */
 
 /* ═══ HOME V2 — Wider search + even dot spacing ═══ */
 .home-v2-search-container {
@@ -8782,10 +8731,6 @@ html.theme-transition::view-transition-new(theme) {
   margin: 0 16px;
 }
 
-/* Override navbar max-width on home v2 */
-.app-shell:has(.home-v2-main) .navbar-inner {
-  max-width: none;
-}
 
 /* ═══════════════════════════════════════════════════════════════════════
    HOME V2 — Cream / Peach / Tan Refinement (light + dark)
@@ -9028,55 +8973,6 @@ html.theme-transition::view-transition-new(theme) {
   border-top-color: rgba(170, 125, 80, 0.12);
 }
 
-/* Light — footer */
-[data-theme-resolved="light"] .app-shell:has(.home-v2-main) > .site-footer {
-  border-top-color: rgba(170, 125, 80, 0.15);
-}
-[data-theme-resolved="light"] .app-shell:has(.home-v2-main) > .site-footer .footer-bottom {
-  color: #9c8b7a;
-}
-[data-theme-resolved="light"] .app-shell:has(.home-v2-main) > .site-footer .footer-bottom a {
-  color: #6b5c4e;
-}
-
-/* Light — nav/header blends with cream bg */
-[data-theme-resolved="light"] .app-shell:has(.home-v2-main) .navbar {
-  background: rgba(250, 246, 241, 0.95);
-}
-[data-theme-resolved="light"] .app-shell:has(.home-v2-main) .brand,
-[data-theme-resolved="light"] .app-shell:has(.home-v2-main) .brand-name {
-  color: #1a1410;
-}
-[data-theme-resolved="light"] .app-shell:has(.home-v2-main) .navbar-search-home {
-  background: #fff8f2;
-  border-color: rgba(170, 125, 80, 0.2);
-  color: #6b5c4e;
-}
-[data-theme-resolved="light"] .app-shell:has(.home-v2-main) .navbar-search-home:hover {
-  border-color: rgba(170, 125, 80, 0.3);
-  background: #fff4ea;
-  color: #1a1410;
-}
-[data-theme-resolved="light"] .app-shell:has(.home-v2-main) .navbar-tab {
-  color: #6b5c4e;
-}
-[data-theme-resolved="light"] .app-shell:has(.home-v2-main) .navbar-tab:hover {
-  color: #1a1410;
-  background: rgba(160, 115, 72, 0.07);
-}
-[data-theme-resolved="light"] .app-shell:has(.home-v2-main) .navbar-tab.active,
-[data-theme-resolved="light"] .app-shell:has(.home-v2-main) .navbar-tab[data-status="active"] {
-  color: #1a1410;
-  background: rgba(160, 115, 72, 0.1);
-}
-[data-theme-resolved="light"] .app-shell:has(.home-v2-main) .navbar-tab-secondary {
-  opacity: 1;
-  color: #7d6d5f;
-}
-[data-theme-resolved="light"] .app-shell:has(.home-v2-main) .navbar-tab-secondary:hover {
-  color: #1a1410;
-}
-
 /* Light — carousel nav arrows */
 [data-theme-resolved="light"] .home-v2-carousel-nav button {
   background: #fff8f2;
@@ -9137,44 +9033,6 @@ html.theme-transition::view-transition-new(theme) {
   box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Home v2 nav contrast */
-[data-theme-resolved="dark"] .app-shell:has(.home-v2-main) .navbar {
-  background: rgba(6, 6, 8, 0.9);
-  border-bottom-color: rgba(255, 255, 255, 0.08);
-}
-[data-theme-resolved="dark"] .app-shell:has(.home-v2-main) .brand,
-[data-theme-resolved="dark"] .app-shell:has(.home-v2-main) .brand-name {
-  color: rgba(255, 255, 255, 0.94);
-}
-[data-theme-resolved="dark"] .app-shell:has(.home-v2-main) .navbar-search-home {
-  background: rgba(255, 255, 255, 0.03);
-  border-color: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.72);
-}
-[data-theme-resolved="dark"] .app-shell:has(.home-v2-main) .navbar-search-home:hover {
-  border-color: rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.9);
-}
-[data-theme-resolved="dark"] .app-shell:has(.home-v2-main) .navbar-tab {
-  color: rgba(255, 255, 255, 0.74);
-}
-[data-theme-resolved="dark"] .app-shell:has(.home-v2-main) .navbar-tab:hover {
-  color: rgba(255, 255, 255, 0.96);
-  background: rgba(255, 255, 255, 0.04);
-}
-[data-theme-resolved="dark"] .app-shell:has(.home-v2-main) .navbar-tab.active,
-[data-theme-resolved="dark"] .app-shell:has(.home-v2-main) .navbar-tab[data-status="active"] {
-  color: rgba(255, 255, 255, 0.98);
-  background: rgba(255, 255, 255, 0.06);
-}
-[data-theme-resolved="dark"] .app-shell:has(.home-v2-main) .navbar-tab-secondary {
-  opacity: 1;
-  color: rgba(255, 255, 255, 0.68);
-}
-[data-theme-resolved="dark"] .app-shell:has(.home-v2-main) .navbar-tab-secondary:hover {
-  color: rgba(255, 255, 255, 0.9);
-}
 
 /* ═══════════════════════════════════════════════════════════════════════
    HOME V2 — Semi-rounded radius (Claw × Hub midpoint)
